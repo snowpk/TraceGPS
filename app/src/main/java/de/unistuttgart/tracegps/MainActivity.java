@@ -69,6 +69,10 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             @Override
             public void onClick(View v) {
                 if (!isBound) {
+                    latitude.setText("-");
+                    longitude.setText("-");
+                    dist.setText("-");
+                    speed.setText("-");
                     startAndBindService();
                     Log.d(TAG, "Press Start Trace()");
                     startStopButton.setText("Stop Trace");
@@ -97,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         int distance = (int) (distdbl * 100);
         distdbl = distance / 100;
         dist.setText("Distance: " + String.valueOf(distdbl) + " m");
-        speed.setText("Speed: "+String.valueOf(traceService.getAverageSpeed() * 3.6) + " km/h");
+        speed.setText("Avg. Speed: "+String.valueOf(traceService.getAverageSpeed() * 3.6) + " km/h Current: " +String.valueOf(traceService.getSpeed() * 3.6) + " km/h" );
     }
 
 
@@ -154,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     private void startAndBindService() {
         if (!isBound) {
+            Toast.makeText(this,"Please Wait",Toast.LENGTH_LONG).show();
             Intent serviceIntent = new Intent(this, TraceService.class);
             startService(serviceIntent);
             bindService(serviceIntent, this, Context.BIND_AUTO_CREATE);
@@ -172,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     }
 
 
-    @Override
+   @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
 
         traceService = ((TraceService.LocalBinder) service).getService();

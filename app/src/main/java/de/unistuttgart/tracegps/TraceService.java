@@ -23,7 +23,7 @@ import java.util.ArrayList;
 
 public class TraceService extends Service {
     private static final String TAG = TraceService.class.getCanonicalName();
-    public static final int REQUEST_ACCESS_FINE_LOCATION = 1;
+
 
     LocationManager lmanager;
     Location current;
@@ -31,6 +31,7 @@ public class TraceService extends Service {
     //TODO: MAYBE JUST LOG INSTANTKY WITHOUT SAVING TO LIST
     ArrayList<Location> route;
     private double distance;
+    private double cumul_speed;
     String fileName;
     File sdDir;
     File myFile;
@@ -44,14 +45,17 @@ public class TraceService extends Service {
         @Override
         public void onLocationChanged(Location location) {
 
+
             if (origin == null) {
                 origin = location;
                 current = location;
                 route.add(location);
+                cumul_speed = cumul_speed + location.getSpeed();
             } else {
                 distance = distance + location.distanceTo(current);
                 current = location;
                 route.add(location);
+                cumul_speed = cumul_speed + location.getSpeed();
             }
 
             try {
@@ -163,10 +167,7 @@ public class TraceService extends Service {
     public IBinder onBind(Intent intent) {
 
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Log.d(TAG, "No Permission");
-        }
-        lmanager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, listener);
+
         distance = 0;
         sdDir = Environment.getExternalStorageDirectory();
         myFile = new File(sdDir+"/Download", "trace.gpx");
@@ -176,9 +177,22 @@ public class TraceService extends Service {
             e.printStackTrace();
         }
 
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "No Permission");
+        }
+
+       /* if(origin==null) {
+            origin = lmanager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            current = origin;
+            route.add(origin);
+        }*/
+
+        lmanager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, listener);
+
         Log.d(TAG, myFile.getName());
         Log.d(TAG, "onBind()");
         return mBinder;
+
     }
 
     @Override
@@ -189,6 +203,7 @@ public class TraceService extends Service {
             e.printStackTrace();
         }
         distance = 0;
+        cumul_speed = 0;
         lmanager.removeUpdates(listener);
         Log.d(TAG, Integer.toString(route.size()));
         route.clear();
@@ -205,13 +220,14 @@ public class TraceService extends Service {
         route = new ArrayList<>();
     }
 
+
     // Methods for Activity to query Information about current route
 
     public double getLatitude(){
         if(current!=null) {
             return current.getLatitude();
         } else {
-            return -1;
+            return 0;
         }
     }
 
@@ -219,15 +235,25 @@ public class TraceService extends Service {
         if(current!=null) {
             return current.getLongitude();
         } else {
-            return -1;
+            return 0;
         }
     }
 
     public double getAverageSpeed(){
+        if(route.size()!=0) {
+            return cumul_speed / (route.size());
+
+        } else {
+            return 0;
+        }
+
+    }
+
+    public double getSpeed(){
         if(current!=null) {
             return current.getSpeed();
         } else {
-            return -1;
+            return 0;
         }
     }
 
