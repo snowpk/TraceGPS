@@ -187,7 +187,7 @@ public class TraceService extends Service {
             route.add(origin);
         }*/
 
-        lmanager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, listener);
+        lmanager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5, listener);
 
         Log.d(TAG, myFile.getName());
         Log.d(TAG, "onBind()");
